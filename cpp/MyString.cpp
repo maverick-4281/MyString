@@ -112,3 +112,7 @@ std::istream& operator>>(std::istream& in, MyString& s) {
 int MyString::length() {
     return len;
 }
+
+const char* MyString::c_str() const {
+    return str;
+}

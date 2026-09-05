@@ -25,6 +25,7 @@ public:
     friend std::istream& operator>>(std::istream& in, MyString& s);
 
     int length();
+    const char* c_str() const;
 };
 
 #endif

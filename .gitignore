@@ -1,0 +1,5 @@
+demo.exe
+*.o
+*.obj
+.DS_Store
+node_modules/
