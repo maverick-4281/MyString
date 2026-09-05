@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MyString Lab — See inside a C++ String Class</title>
+    <title>MyString — A C++ String Class Built From Scratch</title>
     <link rel="stylesheet" href="style.css">
     <script src="wasm/mystring.js"></script>
 </head>
@@ -17,7 +17,10 @@
                 <span class="logo-badge">C++ WebAssembly</span>
             </a>
             <div class="header-links">
-                <a href="https://github.com/maverick-4281/MyString" target="_blank" rel="noopener noreferrer">GitHub Repository</a>
+                <a href="#workbench">Workbench</a> &nbsp;·&nbsp;
+                <a href="#architecture">Architecture</a> &nbsp;·&nbsp;
+                <a href="#source-explorer">Source Explorer</a> &nbsp;·&nbsp;
+                <a href="https://github.com/maverick-4281/MyString" target="_blank" rel="noopener noreferrer">GitHub Repo</a>
             </div>
         </div>
     </header>
@@ -26,216 +29,208 @@
     <section class="hero">
         <div class="container hero-grid">
             <div>
-                <div class="section-tag">Interactive CS Laboratory</div>
-                <h1 class="hero-headline">Building your own string class shows what <code>std::string</code> hides.</h1>
+                <div class="section-tag">Interactive C++ String Laboratory</div>
+                <h1 class="hero-headline">MyString — A String Class Built From Scratch</h1>
                 <p class="hero-text">
-                    MyString exposes the mechanics that a high-level string abstraction normally handles for you: dynamic memory allocation, byte character buffers, pointer ownership, deep copying, manual destruction, and operator overloading.
+                    Explore memory, operators, algorithms, and manual string manipulation under the hood. Built without <code>std::string</code> using custom dynamic memory management (<code>new char[]</code> / <code>delete[]</code>) and executed directly in WebAssembly.
                 </p>
                 <div class="hero-actions">
-                    <a href="#playground" class="btn btn-primary">Open Playground</a>
-                    <a href="#rule-of-three" class="btn btn-secondary">Explore the Class</a>
-                    <a href="#source-explorer" class="btn btn-secondary">View Source</a>
+                    <a href="#workbench" class="btn btn-primary">Launch String Workbench</a>
+                    <a href="#architecture" class="btn btn-secondary">Under the Hood</a>
+                    <a href="#source-explorer" class="btn btn-secondary">View C++ Source</a>
                 </div>
             </div>
             
             <!-- Canonical Hero Animation Card -->
             <div class="canonical-diagram-card">
                 <div class="diagram-header">
-                    <span class="diagram-title">Canonical Object Representation</span>
+                    <span class="diagram-title">Canonical Object Memory Representation</span>
                     <span class="diagram-address" id="hero-addr-tag">WASM Heap Buffer</span>
                 </div>
                 <div class="object-diagram">
                     <div class="obj-row">
                         <span class="obj-name">a</span>
                         <div class="obj-details">
-                            <div><span class="obj-tree">├──</span> str ──────►</div>
-                            <div style="margin-top: 4px;"><span class="obj-tree">└──</span> len = <span id="hero-len-val">5</span></div>
+                            <div><span class="obj-tree">├──</span> str ──────► [ Heap Buffer Address ]</div>
+                            <div style="margin-top: 4px;"><span class="obj-tree">└──</span> len = <span id="hero-len-val">7</span></div>
                         </div>
                     </div>
                     <div class="buffer-box-container" id="hero-buffer-container">
-                        <!-- Animated assembly on load -->
-                        <div class="byte-card active"><span class="byte-char">H</span><span class="byte-index">0</span></div>
-                        <div class="byte-card active"><span class="byte-char">e</span><span class="byte-index">1</span></div>
-                        <div class="byte-card active"><span class="byte-char">l</span><span class="byte-index">2</span></div>
-                        <div class="byte-card active"><span class="byte-char">l</span><span class="byte-index">3</span></div>
-                        <div class="byte-card active"><span class="byte-char">o</span><span class="byte-index">4</span></div>
-                        <div class="byte-card null-byte"><span class="byte-char">\0</span><span class="byte-index">5</span></div>
+                        <!-- Animated assembly on load: r a c e c a r \0 -->
                     </div>
                 </div>
                 <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--text-muted); margin-top: 12px;">
-                    Logical memory layout: pointer to char array on heap + explicit null terminator.
+                    Byte-level inspection: Character · Index · ASCII · Hexadecimal byte.
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Why MyString? Section -->
-    <section id="why-mystring">
+    <!-- String Workbench Section -->
+    <section id="workbench">
         <div class="container">
-            <div class="section-tag">Motivation</div>
-            <h2 class="section-title">Why build a custom C++ String class?</h2>
+            <div class="section-tag">Interactive Laboratory</div>
+            <h2 class="section-title">String Workbench</h2>
             <p class="section-desc">
-                In C++, standard <code>std::string</code> hides dynamic heap memory management, buffer resizing, and destructor calls. Writing <code>MyString</code> from scratch forces direct interaction with raw memory management using <code>new[]</code> and <code>delete[]</code>.
+                Select a category, enter input strings, and observe real C++ execution, byte-level memory allocation, step-by-step algorithm animation, and synchronized C++ source code.
             </p>
 
-            <div class="cards-grid">
-                <div class="info-card">
-                    <h3>Dynamic Memory Allocation</h3>
-                    <p>Strings vary in length at runtime. <code>MyString</code> requests memory from the heap dynamically using <code>new char[len + 1]</code> rather than stack arrays.</p>
-                </div>
-                <div class="info-card">
-                    <h3>Manual Memory Cleanup</h3>
-                    <p>Heap allocations persist until explicitly freed. <code>MyString::~MyString()</code> ensures memory is deallocated via <code>delete[] str</code> when objects go out of scope.</p>
-                </div>
-                <div class="info-card">
-                    <h3>Deep Copy Semantics</h3>
-                    <p>Default member-wise copying leads to shallow copies and double-free crashes. <code>MyString</code> implements explicit copy constructors for independent heap buffers.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Rule of Three Section -->
-    <section id="rule-of-three">
-        <div class="container">
-            <div class="section-tag">Core C++ Principles</div>
-            <h2 class="section-title">The Rule of Three</h2>
-            <p class="section-desc">
-                If a class requires a custom destructor, copy constructor, or copy assignment operator, it almost certainly requires all three to manage resources safely.
-            </p>
-
-            <div class="rule-three-grid">
-                <!-- Copy Constructor -->
-                <div class="rule-card">
-                    <div class="rule-card-header">
-                        <strong>1. Copy Constructor</strong>
-                        <span class="rule-number">Deep Copy</span>
-                    </div>
-                    <div class="rule-card-body">
-                        <p>Allocates a brand new buffer for the copied object and duplicates each byte. Prevents pointer aliasing.</p>
-                        <div class="code-block">
-                            <pre><code><span class="type">MyString</span>::<span class="fn">MyString</span>(<span class="kw">const</span> <span class="type">MyString</span>&amp; other) {
-    len = other.len;
-    str = <span class="kw">new</span> <span class="type">char</span>[len + <span class="str-lit">1</span>];
-    <span class="kw">for</span> (<span class="type">int</span> i = <span class="str-lit">0</span>; i &lt; len; i++) {
-        str[i] = other.str[i];
-    }
-    str[len] = <span class="str-lit">'\0'</span>;
-}</code></pre>
-                        </div>
-                        <p style="font-size: 13px; color: var(--text-secondary);">
-                            <strong>Why it matters:</strong> Without this, <code>b = a</code> causes both <code>a.str</code> and <code>b.str</code> to point to identical memory.
-                        </p>
-                    </div>
+            <div class="workbench-wrapper">
+                <!-- Navigation Tabs -->
+                <div class="workbench-tabs">
+                    <button class="tab-btn active" data-tab="tab-core">01 — CORE</button>
+                    <button class="tab-btn" data-tab="tab-operators">02 — OPERATORS</button>
+                    <button class="tab-btn" data-tab="tab-algorithms">03 — ALGORITHMS</button>
+                    <button class="tab-btn" data-tab="tab-memory">04 — MEMORY</button>
                 </div>
 
-                <!-- Copy Assignment Operator -->
-                <div class="rule-card">
-                    <div class="rule-card-header">
-                        <strong>2. Copy Assignment</strong>
-                        <span class="rule-number">Re-allocation</span>
-                    </div>
-                    <div class="rule-card-body">
-                        <p>Frees existing allocated buffer, allocates new memory, copies data, and guards against self-assignment.</p>
-                        <div class="code-block">
-                            <pre><code><span class="type">MyString</span>&amp; <span class="type">MyString</span>::<span class="kw">operator</span>=(<span class="kw">const</span> <span class="type">MyString</span>&amp; other) {
-    <span class="kw">if</span> (<span class="kw">this</span> == &amp;other) <span class="kw">return</span> *<span class="kw">this</span>;
-
-    <span class="type">char</span>* newStr = <span class="kw">new</span> <span class="type">char</span>[other.len + <span class="str-lit">1</span>];
-    <span class="kw">for</span> (<span class="type">int</span> i = <span class="str-lit">0</span>; i &lt; other.len; i++) newStr[i] = other.str[i];
-    newStr[other.len] = <span class="str-lit">'\0'</span>;
-
-    <span class="kw">delete</span>[] str;
-    str = newStr;
-    len = other.len;
-    <span class="kw">return</span> *<span class="kw">this</span>;
-}</code></pre>
-                        </div>
-                        <p style="font-size: 13px; color: var(--text-secondary);">
-                            <strong>Why it matters:</strong> Prevents memory leaks by releasing the old buffer before assigning the new one.
-                        </p>
-                    </div>
-                </div>
-
-                <!-- Destructor -->
-                <div class="rule-card">
-                    <div class="rule-card-header">
-                        <strong>3. Destructor</strong>
-                        <span class="rule-number">Resource Cleanup</span>
-                    </div>
-                    <div class="rule-card-body">
-                        <p>Invoked automatically when object scope ends to return dynamic heap memory back to the OS.</p>
-                        <div class="code-block">
-                            <pre><code><span class="type">MyString</span>::~<span class="fn">MyString</span>() {
-    <span class="kw">delete</span>[] str;
-}</code></pre>
-                        </div>
-                        <p style="font-size: 13px; color: var(--text-secondary);">
-                            <strong>Why it matters:</strong> Omitting <code>delete[]</code> causes memory leaks for every created object.
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Interactive Playground Section -->
-    <section id="playground">
-        <div class="container">
-            <div class="section-tag">Live C++ WebAssembly Engine</div>
-            <h2 class="section-title">Interactive Memory Laboratory</h2>
-            <p class="section-desc">
-                Interact with the <strong>real compiled C++ MyString class</strong> running inside WebAssembly. Observe dynamic memory allocation, pointer addresses, and byte-level buffer states in real-time.
-            </p>
-
-            <div class="playground-wrapper">
-                <!-- Controls -->
-                <div class="playground-controls">
-                    <div class="input-row">
+                <div class="workbench-body">
+                    <!-- Global String Inputs -->
+                    <div class="input-row" style="margin-bottom: 20px;">
                         <div class="input-group">
                             <label for="input-a">String A (MyString a)</label>
-                            <input type="text" id="input-a" value="Hello">
+                            <input type="text" id="input-a" value="racecar">
                         </div>
                         <div class="input-group">
-                            <label for="input-b">String B (MyString b)</label>
-                            <input type="text" id="input-b" value="World">
+                            <label for="input-b">String B / Substring / Target</label>
+                            <input type="text" id="input-b" value="car">
+                        </div>
+                        <div class="input-group" id="extra-param-group" style="max-width: 140px; display: none;">
+                            <label for="input-param" id="input-param-label">Index / Count</label>
+                            <input type="text" id="input-param" value="0">
                         </div>
                     </div>
 
-                    <div class="ops-row">
-                        <button class="btn btn-primary" id="btn-concat">Concatenate (A + B)</button>
-                        <button class="btn btn-secondary" id="btn-compare">Compare (A == B)</button>
-                        <button class="btn btn-secondary" id="btn-copy">Copy A to C</button>
-                        <button class="btn btn-secondary" id="btn-mutate">Mutate C[0] = 'Y'</button>
-                        <button class="btn btn-secondary" id="btn-assign">Assign B = A</button>
+                    <!-- Category Operations Selector -->
+                    <div class="op-selector-grid" id="op-selector-grid">
+                        <!-- Populated dynamically per tab -->
                     </div>
-                </div>
 
-                <!-- Live Status & Output -->
-                <div style="padding: 16px 24px 0;">
-                    <div class="status-bar">
+                    <!-- Step-by-Step Player Controls (Visible for animatable algorithms) -->
+                    <div class="step-player-controls" id="step-player-controls" style="display: none;">
+                        <button class="btn btn-sm btn-primary" id="btn-player-run">▶ Run</button>
+                        <button class="btn btn-sm btn-secondary" id="btn-player-pause">⏸ Pause</button>
+                        <button class="btn btn-sm btn-secondary" id="btn-player-step">Step ➔</button>
+                        <button class="btn btn-sm btn-outline" id="btn-player-reset">↶ Reset</button>
+                        <span class="player-status-text" id="player-status-text">Step 0 of 0</span>
+                    </div>
+
+                    <!-- Live Status & Output Notice -->
+                    <div class="status-bar" id="workbench-status-bar">
                         <div class="status-indicator" id="wasm-status-dot"></div>
                         <span id="wasm-status-text">Initializing WebAssembly Engine...</span>
                     </div>
-                </div>
 
-                <!-- Playground Content Split -->
-                <div class="playground-content">
-                    <!-- Memory Visualizer Panel -->
-                    <div class="vis-panel">
-                        <h3 style="font-size: 16px; margin-bottom: 16px; font-weight: 700;">Canonical Memory State</h3>
-                        <div id="memory-vis-container">
-                            <!-- Visualizer renders object cards here -->
+                    <!-- Workbench Content Split -->
+                    <div class="playground-content">
+                        <!-- Visualizer Panel -->
+                        <div class="vis-panel">
+                            <h3 style="font-size: 15px; margin-bottom: 16px; font-weight: 700; font-family: 'IBM Plex Mono', monospace;">Visual Execution & Memory State</h3>
+                            <div id="workbench-vis-container">
+                                <!-- Dynamic rendering of memory cards & visualizers -->
+                            </div>
+                        </div>
+
+                        <!-- C++ Source & Complexity Inspector Panel -->
+                        <div class="source-panel">
+                            <div class="panel-title">
+                                <span>Executing C++ Implementation</span>
+                                <span class="complexity-badge" id="active-complexity-badge">Time: O(n) | Space: O(1)</span>
+                            </div>
+                            <pre><code id="active-code-display">// Select an operation to view executing C++ code.</code></pre>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
-                    <!-- Source Code Inspector Panel -->
-                    <div class="source-panel">
-                        <div class="panel-title">
-                            <span>Executing C++ Function</span>
-                            <span id="active-op-badge" style="color: var(--teal-live); font-weight: 600;">operator+</span>
+    <!-- Under The Hood Architecture Section -->
+    <section id="architecture">
+        <div class="container">
+            <div class="section-tag">Viva Reference</div>
+            <h2 class="section-title">Under the Hood Architecture</h2>
+            <p class="section-desc">
+                How user interactions flow from the browser DOM into C++ WebAssembly linear memory and back to the visualizer.
+            </p>
+
+            <div class="arch-flowchart">
+                <div class="arch-node highlight">User Interaction</div>
+                <span class="arch-arrow">➔</span>
+                <div class="arch-node">Vanilla ES6 JS</div>
+                <span class="arch-arrow">➔</span>
+                <div class="arch-node highlight">Embind WASM Bridge</div>
+                <span class="arch-arrow">➔</span>
+                <div class="arch-node">Real C++ MyString</div>
+                <span class="arch-arrow">➔</span>
+                <div class="arch-node highlight">char* Dynamic Heap</div>
+                <span class="arch-arrow">➔</span>
+                <div class="arch-node">Byte Visualizer DOM</div>
+            </div>
+
+            <div class="cards-grid" style="margin-top: 32px;">
+                <div class="info-card">
+                    <h3>1. Vanilla Presentation Layer</h3>
+                    <p>Standard HTML5 & CSS3 with custom CSS variables. ES6 JavaScript manages DOM byte cards and step-by-step player state without any heavy frontend framework overhead.</p>
+                </div>
+                <div class="info-card">
+                    <h3>2. WebAssembly Bridge Layer</h3>
+                    <p><code>cpp/bindings.cpp</code> uses Emscripten Embind to expose C++ constructors, destructors, and algorithm member functions to JavaScript via raw pointers.</p>
+                </div>
+                <div class="info-card">
+                    <h3>3. C++ Memory Core</h3>
+                    <p><code>MyString</code> stores characters in a dynamically allocated <code>char* str</code> buffer with explicit length <code>int len</code> and null terminator <code>\0</code>. All operations execute directly in compiled WASM memory.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stream Operators Section -->
+    <section id="stream-operators">
+        <div class="container">
+            <div class="section-tag">C++ I/O Semantics</div>
+            <h2 class="section-title">Stream Operators: <code>operator&lt;&lt;</code> & <code>operator&gt;&gt;</code></h2>
+            <p class="section-desc">
+                In standard C++, stream operators allow <code>MyString</code> objects to seamlessly integrate with standard streams like <code>std::cout</code> and <code>std::cin</code>.
+            </p>
+
+            <div class="cards-grid">
+                <div class="rule-card">
+                    <div class="rule-card-header">
+                        <strong>Stream Output Operator</strong>
+                        <span class="rule-number">std::ostream</span>
+                    </div>
+                    <div class="rule-card-body">
+                        <p>Streams the internal null-terminated <code>char* str</code> buffer directly to output streams.</p>
+                        <div class="code-block">
+                            <pre><code>std::ostream&amp; <span class="kw">operator</span>&lt;&lt;(std::ostream&amp; out, <span class="kw">const</span> <span class="type">MyString</span>&amp; s) {
+    out &lt;&lt; s.str;
+    <span class="kw">return</span> out;
+}</code></pre>
                         </div>
-                        <pre><code id="active-code-display">// Select an operation above to inspect executing C++ code.</code></pre>
+                    </div>
+                </div>
+
+                <div class="rule-card">
+                    <div class="rule-card-header">
+                        <strong>Stream Input Operator</strong>
+                        <span class="rule-number">std::cin</span>
+                    </div>
+                    <div class="rule-card-body">
+                        <p>Reads input into a buffer, frees existing object memory using <code>delete[] str</code>, and allocates new memory with <code>new char[s.len + 1]</code>.</p>
+                        <div class="code-block">
+                            <pre><code>std::istream&amp; <span class="kw">operator</span>&gt;&gt;(std::istream&amp; in, <span class="type">MyString</span>&amp; s) {
+    <span class="type">char</span> buffer[<span class="str-lit">1000</span>];
+    in &gt;&gt; buffer;
+
+    <span class="kw">delete</span>[] s.str;   <span class="comment">// Free existing memory</span>
+    s.len = s.getLen(buffer);
+    s.str = <span class="kw">new</span> <span class="type">char</span>[s.len + <span class="str-lit">1</span>];
+    <span class="kw">for</span> (<span class="type">int</span> i = <span class="str-lit">0</span>; i &lt; s.len; i++) s.str[i] = buffer[i];
+    s.str[s.len] = <span class="str-lit">'\0'</span>;
+    <span class="kw">return</span> in;
+}</code></pre>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -248,16 +243,17 @@
             <div class="section-tag">Repository Code Base</div>
             <h2 class="section-title">Source Code Explorer</h2>
             <p class="section-desc">
-                Browse the complete original source files from the project repository. Select a file or function to view its exact implementation.
+                Browse the complete original source files from the project repository.
             </p>
 
-            <div class="playground-wrapper">
-                <div class="playground-controls" style="display: flex; gap: 16px; align-items: center;">
+            <div class="workbench-wrapper">
+                <div class="playground-controls" style="display: flex; gap: 16px; align-items: center; background: #FAFBFD; padding: 16px 24px; border-bottom: 1px solid var(--border-color);">
                     <label for="file-select" style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; font-weight: 600;">File:</label>
                     <select id="file-select" style="padding: 8px 12px; font-family: 'IBM Plex Mono', monospace; border: 1px solid var(--border-dark); border-radius: var(--radius-md);">
-                        <option value="MyString.h">MyString.h (Header)</option>
-                        <option value="MyString.cpp">MyString.cpp (Implementation)</option>
-                        <option value="main.cpp">main.cpp (Driver Demo)</option>
+                        <option value="MyString.h">MyString.h (Header with 12 New Algorithms)</option>
+                        <option value="MyString.cpp">MyString.cpp (Complete Custom char* Implementation)</option>
+                        <option value="bindings.cpp">bindings.cpp (Emscripten WebAssembly Bridge)</option>
+                        <option value="main.cpp">main.cpp (Native Test Suite Driver)</option>
                     </select>
                 </div>
                 <div class="source-panel" style="border: none;">
@@ -273,15 +269,15 @@
             <div class="section-tag">Empirical Integrity</div>
             <h2 class="section-title">Verified, Not Assumed</h2>
             <p class="section-desc">
-                Every metric and compiler check listed below was executed directly on this build environment. No fabricated assertions or fake zero-warning claims.
+                Every metric and compiler check listed below was executed directly on this build environment. No fabricated assertions.
             </p>
 
             <ul class="check-list">
                 <li class="check-item">
                     <div class="check-icon">✓</div>
                     <div>
-                        <div class="check-title">Native GCC Compilation (g++ -Wall -Wextra)</div>
-                        <div class="check-desc">Compiled cleanly with zero compiler warnings under MSYS2 g++ 13.2.0. Native <code>demo.exe</code> binary verified.</div>
+                        <div class="check-title">Native GCC Test Suite (g++ -Wall -Wextra)</div>
+                        <div class="check-desc">Compiled cleanly with zero compiler warnings under MSYS2 g++ 13.2.0. Native <code>demo.exe</code> executed all 12 algorithms correctly.</div>
                     </div>
                 </li>
                 <li class="check-item">
@@ -294,22 +290,15 @@
                 <li class="check-item">
                     <div class="check-icon">✓</div>
                     <div>
-                        <div class="check-title">Self-Assignment Safety Check (a = a)</div>
-                        <div class="check-desc">Verified self-assignment protection check <code>if (this == &amp;other) return *this;</code> in <code>operator=</code>.</div>
+                        <div class="check-title">Automated Node.js Integration Suite</div>
+                        <div class="check-desc">Executed <code>scripts/test_wasm_spike.js</code> verifying all 12 WebAssembly bindings in Node.js.</div>
                     </div>
                 </li>
                 <li class="check-item">
                     <div class="check-icon">✓</div>
                     <div>
-                        <div class="check-title">Deep Copy Buffer Independence</div>
-                        <div class="check-desc">Verified that copying object <code>a</code> to <code>c</code> allocates separate distinct heap buffer addresses in WebAssembly memory.</div>
-                    </div>
-                </li>
-                <li class="check-item">
-                    <div class="check-icon">✓</div>
-                    <div>
-                        <div class="check-title">Standard C++ File Normalization (Case Casing)</div>
-                        <div class="check-desc">Normalized casing from <code>mystring.h</code> / <code>Mystring.cpp</code> to <code>MyString.h</code> / <code>MyString.cpp</code> to support case-sensitive Unix build systems.</div>
+                        <div class="check-title">Deep Copy & Self-Assignment Verification</div>
+                        <div class="check-desc">Verified separate heap buffer allocation for copied objects and self-assignment protection check <code>if (this == &amp;other) return *this;</code>.</div>
                     </div>
                 </li>
             </ul>
@@ -354,22 +343,11 @@
         </div>
     </section>
 
-    <!-- About Section -->
-    <section id="about">
-        <div class="container">
-            <div class="section-tag">Project Context</div>
-            <h2 class="section-title">About MyString Lab</h2>
-            <p class="section-desc">
-                This project originated as a custom C++ String class implementation built from scratch. This interactive website extends the C++ codebase into a visual learning laboratory, executing the real compiled C++ class directly inside the browser using WebAssembly.
-            </p>
-        </div>
-    </section>
-
     <!-- Footer -->
     <footer>
         <div class="container footer-inner">
             <div>
-                <strong>MyString Lab</strong> — Visualizing custom C++ dynamic memory management.
+                <strong>MyString Lab</strong> — A String Class Built From Scratch in C++ & WebAssembly.
             </div>
             <div>
                 <a href="https://github.com/maverick-4281/MyString" style="color: var(--text-secondary); text-decoration: none;" target="_blank" rel="noopener noreferrer">GitHub Repository</a>

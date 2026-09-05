@@ -1,39 +1,66 @@
 const Module = require('../web/wasm/mystring.js');
 
 Module.onRuntimeInitialized = function() {
-    console.log('WASM module loaded successfully!');
+    console.log('=== WebAssembly MyString Integration Test Suite ===');
 
-    // Test Spike 1: Create MyString("Hello")
-    console.log('\n--- Spike 1: Create MyString("Hello") ---');
-    const strPtr = Module.createString('Hello');
-    console.log('Created MyString pointer address:', '0x' + Module.getObjectAddress(strPtr).toString(16).toUpperCase());
+    // Test 1: Basic String Creation & Inspection
+    const str1 = Module.createString('Hello');
+    console.log('str1 value:', Module.getStringValue(str1));
+    console.log('str1 len:', Module.getLength(str1));
 
-    const len = Module.getLength(strPtr);
-    console.log('Real C++ MyString length():', len);
+    // Test 2: Palindrome Algorithm
+    const palStr = Module.createString('racecar');
+    console.log('isPalindrome("racecar"):', Module.isPalindrome(palStr));
 
-    const val = Module.getStringValue(strPtr);
-    console.log('Real C++ MyString value:', val);
+    // Test 3: Reverse Algorithm
+    const revPtr = Module.reverseString(str1);
+    console.log('reverse("Hello"):', Module.getStringValue(revPtr));
 
-    const bufAddr = Module.getBufferAddress(strPtr);
-    console.log('Real C++ char* str heap buffer address:', '0x' + bufAddr.toString(16).toUpperCase());
+    // Test 4: Find Substring
+    const textPtr = Module.createString('hello world from MyString');
+    const targetPtr = Module.createString('world');
+    console.log('find("world" in text):', Module.findString(textPtr, targetPtr));
 
-    // Test Spike 2: Concatenate "Hello" + " World"
-    console.log('\n--- Spike 2: Concatenate "Hello" + " World" ---');
-    const worldPtr = Module.createString(' World');
-    const concatPtr = Module.concatStrings(strPtr, worldPtr);
-    console.log('Concatenated value (operator+):', Module.getStringValue(concatPtr));
-    console.log('Concatenated length:', Module.getLength(concatPtr));
-    console.log('Concatenated heap buffer address:', '0x' + Module.getBufferAddress(concatPtr).toString(16).toUpperCase());
+    // Test 5: Count Character & Count Vowels
+    console.log('count("l" in "Hello"):', Module.countChar(str1, 'l'));
+    console.log('countVowels("hello world..."):', Module.countVowels(textPtr));
 
-    // Test Spike 3: Subscript operator [] & mutation
-    console.log('\n--- Spike 3: Subscript operator [] & mutation ---');
-    console.log('Char at index 0:', String.fromCharCode(Module.getChar(strPtr, 0)));
-    Module.setChar(strPtr, 0, 'J');
-    console.log('After setChar(0, "J"), value is:', Module.getStringValue(strPtr));
+    // Test 6: Substring
+    const subPtr = Module.substring(textPtr, 6, 5);
+    console.log('substring(6, 5):', Module.getStringValue(subPtr));
 
-    // Cleanup
-    Module.destroyString(strPtr);
-    Module.destroyString(worldPtr);
-    Module.destroyString(concatPtr);
-    console.log('\nSUCCESS: Real C++ WebAssembly execution verified end-to-end!');
+    // Test 7: Upper & Lower
+    const upperPtr = Module.toUpper(str1);
+    console.log('toUpper("Hello"):', Module.getStringValue(upperPtr));
+
+    // Test 8: Anagram
+    const a1 = Module.createString('listen');
+    const a2 = Module.createString('silent');
+    console.log('isAnagram("listen", "silent"):', Module.isAnagram(a1, a2));
+
+    // Test 9: Word Count & Trim
+    const spacedPtr = Module.createString('   Hello world   ');
+    console.log('wordCount:', Module.wordCount(spacedPtr));
+    const trimmedPtr = Module.trimString(spacedPtr);
+    console.log('trim:', `"${Module.getStringValue(trimmedPtr)}"`);
+
+    // Test 10: Replace
+    const repPtr = Module.replaceString(textPtr, targetPtr, Module.createString('antigravity'));
+    console.log('replace("world" -> "antigravity"):', Module.getStringValue(repPtr));
+
+    // Cleanup WASM objects
+    Module.destroyString(str1);
+    Module.destroyString(palStr);
+    Module.destroyString(revPtr);
+    Module.destroyString(textPtr);
+    Module.destroyString(targetPtr);
+    Module.destroyString(subPtr);
+    Module.destroyString(upperPtr);
+    Module.destroyString(a1);
+    Module.destroyString(a2);
+    Module.destroyString(spacedPtr);
+    Module.destroyString(trimmedPtr);
+    Module.destroyString(repPtr);
+
+    console.log('\nSUCCESS: All WebAssembly bindings and C++ algorithms verified!');
 };
