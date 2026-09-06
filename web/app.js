@@ -505,11 +505,11 @@ function runActiveOperation() {
             const oldVal = objB.getValue();
             freedBlocks.unshift({ addr: oldAddr, val: oldVal });
             Module.assignString(objB.ptr, objA.ptr);
-            renderMemoryView([ { label: 'a', obj: objA }, { label: 'b (assigned)', obj: objB, highlight: true } ]);
+            renderMemoryView([ { label: 'a', obj: objA }, { label: 'b (assigned)', obj: objB, highlight: true } ], 'Copy Assignment (b = a): Old buffer was freed via delete[] str', true);
             updateCodeSnippet('assign', 'operator=');
             break;
         case 'destruct':
-            renderMemoryView([ { label: 'a', obj: objA } ]);
+            renderMemoryView([ { label: 'a', obj: objA } ], 'Destructor: delete[] str frees allocated heap buffer upon object end-of-scope', true);
             updateCodeSnippet('assign', 'MyString::~MyString()');
             break;
 
@@ -522,8 +522,7 @@ function runActiveOperation() {
             break;
         case 'compare':
             const isEqual = Module.equalsStrings(objA.ptr, objB.ptr);
-            renderNotice(`operator== Result: ${isEqual ? 'TRUE (Exact Character Match)' : 'FALSE (Different Strings)'}`, isEqual);
-            renderMemoryView([ { label: 'a', obj: objA }, { label: 'b', obj: objB } ]);
+            renderMemoryView([ { label: 'a', obj: objA }, { label: 'b', obj: objB } ], `operator== Result: ${isEqual ? 'TRUE (Exact Character Match)' : 'FALSE (Different Strings)'}`);
             updateCodeSnippet('compare', 'operator==');
             break;
         case 'index':
@@ -531,13 +530,11 @@ function runActiveOperation() {
             document.getElementById('input-param-label').textContent = 'Index i';
             const idxVal = parseInt(document.getElementById('input-param').value) || 0;
             const ch = Module.getChar(objA.ptr, idxVal);
-            renderNotice(`operator[${idxVal}] = '${ch === '\0' ? '\\0' : String.fromCharCode(ch)}'`, true);
-            renderMemoryView([ { label: 'a', obj: objA } ]);
+            renderMemoryView([ { label: 'a', obj: objA } ], `operator[${idxVal}] = '${ch === 0 || ch === '\0' ? '\\0' : String.fromCharCode(ch)}'`);
             updateCodeSnippet('mutate', 'operator[]');
             break;
         case 'length':
-            renderNotice(`a.length() = ${objA.getLength()}`, true);
-            renderMemoryView([ { label: 'a', obj: objA } ]);
+            renderMemoryView([ { label: 'a', obj: objA } ], `a.length() = ${objA.getLength()}`);
             updateCodeSnippet('length', 'length()');
             break;
 
@@ -554,8 +551,7 @@ function runActiveOperation() {
             break;
         case 'find':
             const matchIdx = Module.findString(objA.ptr, objB.ptr);
-            renderNotice(matchIdx !== -1 ? `FOUND substring "${objB.getValue()}" at index ${matchIdx}` : `NOT FOUND (returns -1)`, matchIdx !== -1);
-            renderMemoryView([ { label: 'string (a)', obj: objA }, { label: 'target (b)', obj: objB } ]);
+            renderMemoryView([ { label: 'string (a)', obj: objA }, { label: 'target (b)', obj: objB } ], matchIdx !== -1 ? `FOUND substring "${objB.getValue()}" at index ${matchIdx}` : `NOT FOUND (returns -1)`);
             updateCodeSnippet('find', 'find()');
             break;
         case 'substring':
@@ -570,14 +566,12 @@ function runActiveOperation() {
         case 'count':
             const chTarget = (objB.getValue() || 'a')[0];
             const countRes = Module.countChar(objA.ptr, chTarget);
-            renderNotice(`count('${chTarget}') = ${countRes} occurrences`, true);
-            renderMemoryView([ { label: 'a', obj: objA } ]);
+            renderMemoryView([ { label: 'a', obj: objA } ], `count('${chTarget}') = ${countRes} occurrences`);
             updateCodeSnippet('count', 'count()');
             break;
         case 'anagram':
             const isAna = Module.isAnagram(objA.ptr, objB.ptr);
-            renderNotice(isAna ? `✓ ANAGRAMS (Identical character frequency counts)` : `✕ NOT ANAGRAMS`, isAna);
-            renderAnagramFrequencyTable();
+            renderAnagramFrequencyTable(isAna);
             updateCodeSnippet('anagram', 'isAnagram()');
             break;
         case 'upper':
@@ -594,14 +588,12 @@ function runActiveOperation() {
             break;
         case 'vowels':
             const vCount = Module.countVowels(objA.ptr);
-            renderNotice(`Vowels Count = ${vCount}`, true);
-            renderMemoryView([ { label: 'a', obj: objA } ]);
+            renderMemoryView([ { label: 'a', obj: objA } ], `Vowels Count = ${vCount}`);
             updateCodeSnippet('vowels', 'countVowels()');
             break;
         case 'wordCount':
             const wCount = Module.wordCount(objA.ptr);
-            renderNotice(`Word Count = ${wCount}`, true);
-            renderMemoryView([ { label: 'a', obj: objA } ]);
+            renderMemoryView([ { label: 'a', obj: objA } ], `Word Count = ${wCount}`);
             updateCodeSnippet('wordCount', 'wordCount()');
             break;
         case 'trim':
@@ -619,8 +611,11 @@ function runActiveOperation() {
 
         // Memory Tab
         case 'mem-inspect':
-        case 'mem-lifecycle':
             renderMemoryView([ { label: 'a', obj: objA }, { label: 'b', obj: objB } ]);
+            updateCodeSnippet('copy', 'Memory Inspection');
+            break;
+        case 'mem-lifecycle':
+            renderMemoryView([ { label: 'a', obj: objA }, { label: 'b', obj: objB } ], 'Showing active allocations and historical freed heap memory blocks', true);
             updateCodeSnippet('copy', 'Memory Inspection');
             break;
     }
@@ -729,26 +724,28 @@ function renderFreedBlocks() {
     return html;
 }
 
-function renderMemoryView(objects) {
+function renderMemoryView(objects, noticeMsg = null, showFreed = false) {
     const container = document.getElementById('workbench-vis-container');
     let html = '';
+    
+    if (noticeMsg) {
+        html += `
+            <div class="status-bar" style="background: var(--teal-live-bg); border: 1px solid var(--teal-live); margin-bottom: 20px;">
+                <strong>Result:</strong> &nbsp;${noticeMsg}
+            </div>`;
+    }
+
     objects.forEach(item => {
         html += renderObjectCard(item.label, item.obj, item.highlight, item.leftPtr, item.rightPtr);
     });
-    html += renderFreedBlocks();
+
+    if (showFreed) {
+        html += renderFreedBlocks();
+    }
     container.innerHTML = html;
 }
 
-function renderNotice(msg, isSuccess = true) {
-    const container = document.getElementById('workbench-vis-container');
-    const noticeHtml = `
-        <div class="status-bar" style="background: ${isSuccess ? 'var(--teal-live-bg)' : 'var(--brick-freed-bg)'}; border: 1px solid ${isSuccess ? 'var(--teal-live)' : 'var(--brick-freed-border)'}; margin-bottom: 20px;">
-            <strong>Result:</strong> &nbsp;${msg}
-        </div>`;
-    container.innerHTML = noticeHtml;
-}
-
-function renderAnagramFrequencyTable() {
+function renderAnagramFrequencyTable(isAnagram) {
     const valA = objA.getValue();
     const valB = objB.getValue();
 
@@ -773,6 +770,12 @@ function renderAnagramFrequencyTable() {
             </tr>`;
     });
 
+    const noticeMsg = isAnagram ? `✓ ANAGRAMS (Identical character frequency counts)` : `✕ NOT ANAGRAMS`;
+    const noticeHtml = `
+        <div class="status-bar" style="background: ${isAnagram ? 'var(--teal-live-bg)' : 'var(--brick-freed-bg)'}; border: 1px solid ${isAnagram ? 'var(--teal-live)' : 'var(--brick-freed-border)'}; margin-bottom: 20px;">
+            <strong>Result:</strong> &nbsp;${noticeMsg}
+        </div>`;
+
     const tableHtml = `
         <div style="margin-bottom: 20px;">
             <h4 style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; margin-bottom: 10px;">Side-by-Side Character Frequency Analysis</h4>
@@ -784,7 +787,7 @@ function renderAnagramFrequencyTable() {
             </table>
         </div>`;
 
-    document.getElementById('workbench-vis-container').innerHTML = tableHtml + renderObjectCard('a', objA) + renderObjectCard('b', objB);
+    document.getElementById('workbench-vis-container').innerHTML = noticeHtml + tableHtml + renderObjectCard('a', objA) + renderObjectCard('b', objB);
 }
 
 // Step-by-Step Player Engine (Palindrome)
@@ -829,12 +832,8 @@ function renderPlayerStep() {
 
     document.getElementById('player-status-text').textContent = `Step ${playerCurrentStep + 1} of ${playerSteps.length}`;
 
-    const noticeHtml = `
-        <div class="status-bar" style="background: ${step.done ? (step.isMatch ? 'var(--teal-live-bg)' : 'var(--brick-freed-bg)') : 'var(--blue-pointer-bg)'}; border: 1px solid ${step.done ? (step.isMatch ? 'var(--teal-live)' : 'var(--brick-freed-border)') : 'var(--blue-pointer)'}; margin-bottom: 20px;">
-            <strong>Step ${playerCurrentStep + 1}:</strong> &nbsp;${step.desc}
-        </div>`;
-
-    document.getElementById('workbench-vis-container').innerHTML = noticeHtml + renderObjectCard('a (isPalindrome)', objA, false, step.left, step.right);
+    const noticeMsg = `Step ${playerCurrentStep + 1}: ${step.desc}`;
+    renderMemoryView([ { label: 'a (isPalindrome)', obj: objA, leftPtr: step.left, rightPtr: step.right } ], noticeMsg, false);
 }
 
 function bindPlayerEvents() {
