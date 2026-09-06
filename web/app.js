@@ -491,13 +491,14 @@ function runActiveOperation() {
     switch (activeOp) {
         // Core Tab
         case 'construct':
-            renderMemoryView([ { label: 'a', obj: objA } ]);
+            renderMemoryView([ { label: 'a', obj: objA } ], `Parameterized Constructor MyString("${escapeHtml(objA.getValue())}"): Allocated ${objA.getLength() + 1} bytes on WASM Heap.`);
             updateCodeSnippet('copy', 'MyString(const char* s)');
             break;
         case 'copy':
             if (objResult) objResult.dispose();
             objResult = new WasmMyString(Module.copyString(objA.ptr));
-            renderMemoryView([ { label: 'a', obj: objA }, { label: 'copy (b)', obj: objResult, highlight: true } ]);
+            const copyNotice = `Deep Copy Constructor MyString(const MyString& other): Allocated new independent heap buffer for copy (b) at address ${objResult.getBufferAddress()} (Original a buffer at ${objA.getBufferAddress()} remains separate).`;
+            renderMemoryView([ { label: 'a (original)', obj: objA }, { label: 'copy (b)', obj: objResult, highlight: true } ], copyNotice, false);
             updateCodeSnippet('copy', 'MyString(const MyString& other)');
             break;
         case 'assign':
@@ -505,11 +506,41 @@ function runActiveOperation() {
             const oldVal = objB.getValue();
             freedBlocks.unshift({ addr: oldAddr, val: oldVal });
             Module.assignString(objB.ptr, objA.ptr);
-            renderMemoryView([ { label: 'a', obj: objA }, { label: 'b (assigned)', obj: objB, highlight: true } ], 'Copy Assignment (b = a): Old buffer was freed via delete[] str', true);
+            renderMemoryView([ { label: 'a', obj: objA }, { label: 'b (assigned)', obj: objB, highlight: true } ], 'Copy Assignment (b = a): Old buffer was freed via delete[] str before allocating new memory', true);
             updateCodeSnippet('assign', 'operator=');
             break;
         case 'destruct':
-            renderMemoryView([ { label: 'a', obj: objA } ], 'Destructor: delete[] str frees allocated heap buffer upon object end-of-scope', true);
+            const destAddr = objA.getBufferAddress();
+            const destVal = objA.getValue();
+            const noticeMsg = `Destructor MyString::~MyString() invoked: delete[] str deallocates ${destVal.length + 1} bytes of heap memory at buffer address ${destAddr}`;
+            
+            document.getElementById('workbench-vis-container').innerHTML = `
+                <div class="status-bar" style="background: var(--brick-freed-bg); border: 1px solid var(--brick-freed-border); margin-bottom: 20px;">
+                    <strong>Result:</strong> &nbsp;${noticeMsg}
+                </div>
+                <div class="canonical-diagram-card" style="margin-bottom: 20px;">
+                    <div class="diagram-header">
+                        <span class="diagram-title">Object <strong>a</strong> &nbsp;[Object Addr: ${objA.getObjectAddress()}]</span>
+                        <span class="diagram-address" style="background: var(--brick-freed-bg); color: var(--brick-freed); border-color: var(--brick-freed-border);">Heap Buffer: FREED (nullptr)</span>
+                    </div>
+                    <div class="object-diagram">
+                        <div class="obj-row">
+                            <span class="obj-name">a</span>
+                            <div class="obj-details">
+                                <div><span class="obj-tree">├──</span> str ──────► [ nullptr / Freed Memory ]</div>
+                                <div style="margin-top: 4px;"><span class="obj-tree">└──</span> len = 0</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div style="margin-bottom: 20px;">
+                    <div class="freed-block-notice">
+                        <span>╳ Deallocated Heap Memory Block [Address: ${destAddr}] · Released via delete[] str in ~MyString()</span>
+                    </div>
+                    <div class="buffer-box-container" style="margin-top: 8px;">
+                        ${renderSingleFreedBuffer(destVal)}
+                    </div>
+                </div>`;
             updateCodeSnippet('assign', 'MyString::~MyString()');
             break;
 
@@ -690,34 +721,37 @@ function renderObjectCard(label, wasmObj, isHighlight = false, leftPtr = -1, rig
         </div>`;
 }
 
+function renderSingleFreedBuffer(val) {
+    let byteBoxesHtml = '';
+    for (let i = 0; i < val.length; i++) {
+        const ascii = val[i].charCodeAt(0);
+        byteBoxesHtml += `
+            <div class="byte-card freed">
+                <span class="byte-char">${escapeHtml(val[i])}</span>
+                <span class="byte-index">i=${i}</span>
+                <span class="byte-meta">${ascii}</span>
+            </div>`;
+    }
+    byteBoxesHtml += `
+        <div class="byte-card freed">
+            <span class="byte-char">\\0</span>
+            <span class="byte-index">i=${val.length}</span>
+            <span class="byte-meta">0</span>
+        </div>`;
+    return byteBoxesHtml;
+}
+
 function renderFreedBlocks() {
     if (freedBlocks.length === 0) return '';
     let html = '';
     freedBlocks.forEach(block => {
-        let byteBoxesHtml = '';
-        for (let i = 0; i < block.val.length; i++) {
-            const ascii = block.val[i].charCodeAt(0);
-            byteBoxesHtml += `
-                <div class="byte-card freed">
-                    <span class="byte-char">${escapeHtml(block.val[i])}</span>
-                    <span class="byte-index">i=${i}</span>
-                    <span class="byte-meta">${ascii}</span>
-                </div>`;
-        }
-        byteBoxesHtml += `
-            <div class="byte-card freed">
-                <span class="byte-char">\\0</span>
-                <span class="byte-index">i=${block.val.length}</span>
-                <span class="byte-meta">0</span>
-            </div>`;
-
         html += `
             <div style="margin-bottom: 20px;">
                 <div class="freed-block-notice">
                     <span>╳ Freed Heap Memory Block [Address: ${block.addr}] · Released via delete[] str</span>
                 </div>
                 <div class="buffer-box-container" style="margin-top: 8px;">
-                    ${byteBoxesHtml}
+                    ${renderSingleFreedBuffer(block.val)}
                 </div>
             </div>`;
     });
